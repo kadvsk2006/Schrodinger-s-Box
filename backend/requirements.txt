@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────
+#  Schrödinger's Box — Backend Dependencies
+# ─────────────────────────────────────────────────────────────
+
+# Web framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Rate limiting
+slowapi
+
+# ORM / Database
+sqlalchemy
+PyJWT
+
+# PQC — Open Quantum Safe (liboqs Python bindings)
+# Install with: pip install liboqs-python
+# If this fails on your machine, the code auto-falls back to classical simulation.
+# liboqs-python
+
+# Classic cryptography (fallbacks + AES-256-GCM + HKDF)
+cryptography
+
+# Quantum simulation
+qiskit
+qiskit-aer          # Local statevector / qasm simulator
+pylatexenc             # Circuit diagram text rendering
+
+# Benchmarking
+psutil
+
+# Utilities
+python-dotenv
+pydantic
+httpx               # Async HTTP (for internal service calls if needed)

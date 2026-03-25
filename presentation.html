@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schrödinger's Box — Presentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #050810;
+    --surface: #0a0f1d;
+    --border: rgba(255,255,255,0.07);
+    --cyan: #00d4ff;
+    --green: #00ff88;
+    --purple: #8b5cf6;
+    --pink: #ff006e;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .deck { width:100vw; height:100vh; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: all 0.45s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.prev {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ─── Starfield ─── */
+  .stars {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--d) ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity:0.1; transform: scale(1); }
+    50% { opacity:0.8; transform: scale(1.3); }
+  }
+
+  /* ─── Nav ─── */
+  nav {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(10,15,29,0.8);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 10px 24px;
+    backdrop-filter: blur(20px);
+    z-index: 100;
+  }
+
+  nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 20px;
+    transition: color 0.2s;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+  nav button:hover { color: var(--cyan); }
+
+  .progress {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .dot.active { background: var(--cyan); transform: scale(1.4); }
+
+  #slide-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 48px;
+    text-align: center;
+  }
+
+  /* ─── Shared slide content styles ─── */
+  .slide > * { position: relative; z-index: 1; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .badge.cyan  { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.35); color: var(--cyan); }
+  .badge.green { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.35); color: var(--green); }
+  .badge.purple{ background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.35); color: var(--purple); }
+  .badge.pink  { background: rgba(255,0,110,0.1); border: 1px solid rgba(255,0,110,0.35); color: var(--pink); }
+
+  h1.hero {
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 50%, var(--purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+  }
+
+  .subtitle {
+    font-size: clamp(14px, 1.8vw, 18px);
+    color: var(--muted);
+    text-align: center;
+    max-width: 700px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+  }
+
+  h2.slide-title {
+    font-size: clamp(24px, 3.5vw, 42px);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .section-sub {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  /* ─── Cards ─── */
+  .cards {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .card:hover {
+    border-color: rgba(0,212,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,212,255,0.08);
+  }
+
+  .card-icon { font-size: 28px; margin-bottom: 12px; }
+  .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .card code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cyan); }
+
+  /* ─── Algorithm table ─── */
+  table {
+    width: 100%;
+    max-width: 860px;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    background: rgba(0,212,255,0.05);
+    color: var(--cyan);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 16px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+  .tag.pqc { background:rgba(0,255,136,0.1); color:var(--green); }
+  .tag.classical { background:rgba(255,0,110,0.08); color:var(--pink); }
+  .tag.hybrid{ background:rgba(139,92,246,0.1); color:var(--purple); }
+  .tag.quantum{ background:rgba(0,212,255,0.1); color:var(--cyan); }
+
+  /* ─── Code block ─── */
+  .code-block {
+    background: #060a14;
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 12px;
+    padding: 24px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.9;
+    max-width: 860px;
+    width: 100%;
+    color: #a0b3cc;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .code-block .c  { color: var(--cyan); }
+  .code-block .g  { color: var(--green); }
+  .code-block .p  { color: var(--purple); }
+  .code-block .m  { color: var(--muted); }
+
+  /* ─── Flow diagram ─── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    max-width: 900px;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 16px;
+  }
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+    min-width: 130px;
+    flex: 1;
+    max-width: 160px;
+    transition: all 0.2s;
+  }
+  .flow-step:hover {
+    border-color: rgba(0,212,255,0.4);
+    box-shadow: 0 0 20px rgba(0,212,255,0.1);
+  }
+  .flow-step .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    margin-bottom: 6px;
+    letter-spacing: 0.1em;
+  }
+  .flow-step .step-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .flow-step .step-algo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+  }
+  .flow-arrow {
+    font-size: 20px;
+    color: rgba(0,212,255,0.4);
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  /* ─── Stats row ─── */
+  .stats {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 900px;
+    width: 100%;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    flex: 1;
+    min-width: 150px;
+  }
+  .stat-val {
+    font-size: clamp(28px, 3.5vw, 42px);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    background: linear-gradient(135deg, var(--cyan), var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── Checklist ─── */
+  .checklist {
+    list-style: none;
+    max-width: 720px;
+    width: 100%;
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ─── Glowing lines decoration ─── */
+  .glow-line {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(80px);
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 960px;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+    .slide { padding: 40px 24px; }
+    h1.hero { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Starfield -->
+<div class="stars" id="stars"></div>
+
+<!-- Slides -->
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active" data-slide="1">
+    <div class="glow-line" style="width:600px;height:400px;background:var(--cyan);top:-100px;left:-100px;"></div>
+    <div class="glow-line" style="width:400px;height:400px;background:var(--purple);bottom:-100px;right:-100px;"></div>
+    <div class="badge cyan">🔐 Post-Quantum Cryptography</div>
+    <h1 class="hero">Schrödinger's Box</h1>
+    <p class="subtitle">
+      The first hybrid communication platform combining CRYSTALS-Kyber, Classic McEliece,
+      SPHINCS+, AES-256-GCM, HKDF fusion, and Qiskit quantum entropy into a single
+      quantum-resistant secure messenger.
+    </p>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-label">PQC Algorithms</div></div>
+      <div class="stat"><div class="stat-val">256</div><div class="stat-label">Bit Session Keys</div></div>
+      <div class="stat"><div class="stat-val">NIST</div><div class="stat-label">Level 5 Security</div></div>
+      <div class="stat"><div class="stat-val">∞</div><div class="stat-label">Quantum Resistance</div></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: Problem -->
+  <div class="slide" data-slide="2">
+    <div class="badge pink">⚠️ The Threat</div>
+    <h2 class="slide-title">Harvest Now, Decrypt Later</h2>
+    <p class="section-sub">Nation-states are storing today's encrypted traffic to decrypt it once quantum computers mature</p>
+    <div class="cards" style="grid-template-columns: 1fr 1fr 1fr; max-width: 900px;">
+      <div class="card">
+        <div class="card-icon">🔬</div>
+        <h3>Shor's Algorithm</h3>
+        <p>Breaks RSA and ECDH in polynomial time on a CRQC. All current PKI becomes immediately vulnerable.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Grover's Algorithm</h3>
+        <p>Halves the effective key length of symmetric ciphers. AES-128 becomes AES-64 equivalent in strength.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🗄️</div>
+        <h3>Store Now</h3>
+        <p>Encrypted data intercepted today will be decryptable in 5–10 years when sufficiently large quantum computers exist.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: Solution -->
+  <div class="slide" data-slide="3">
+    <div class="badge green">✅ The Solution</div>
+    <h2 class="slide-title">Six Layers of Quantum-Safe Protection</h2>
+    <p class="section-sub">Multiple independent algorithms — breaking one leaves five more intact</p>
+    <table>
+      <thead>
+        <tr>
+          <th>ALGORITHM</th>
+          <th>TYPE</th>
+          <th>NIST LEVEL</th>
+          <th>QUANTUM SAFE</th>
+          <th>ROLE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>CRYSTALS-Kyber1024</td><td><span class="tag pqc">PQC</span></td><td>Level 5</td><td>✅ Lattice-based</td><td>KEM #1</td></tr>
+        <tr><td>Classic McEliece 8192</td><td><span class="tag pqc">PQC</span></td><td>Level 5</td><td>✅ Code-based</td><td>KEM #2</td></tr>
+        <tr><td>SPHINCS+-SHA2-256f</td><td><span class="tag pqc">PQC</span></td><td>Level 5</td><td>✅ Hash-based</td><td>Signatures</td></tr>
+        <tr><td>AES-256-GCM</td><td><span class="tag classical">Symmetric</span></td><td>—</td><td>✅ Grover: 128-bit min</td><td>Encryption</td></tr>
+        <tr><td>HKDF-SHA256</td><td><span class="tag hybrid">KDF</span></td><td>—</td><td>✅ Derived from 3 secrets</td><td>Key Fusion</td></tr>
+        <tr><td>Qiskit QRNG</td><td><span class="tag quantum">Quantum</span></td><td>—</td><td>✅ True randomness</td><td>Entropy</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SLIDE 4: Architecture -->
+  <div class="slide" data-slide="4">
+    <div class="badge cyan">🏗️ Architecture</div>
+    <h2 class="slide-title">System Overview</h2>
+    <p class="section-sub">React frontend ↔ FastAPI backend with full PQC engine</p>
+    <div class="code-block"><span class="m">┌──────────────────────────────────────────────────────────────┐</span>
+<span class="m">│              </span><span class="c">CLIENT (React 18 + TypeScript + Vite :5173)</span><span class="m">         │</span>
+<span class="m">│  Messenger  │  Threat Intel  │  Benchmarks  │  BYOA Plugin   │</span>
+<span class="m">│                  AuthContext (JWT + auto-expiry)              │</span>
+<span class="m">└─────────────────────┬────────────────────────────────────────┘</span>
+                      <span class="c">│ HTTP /api/*  ·  WebSocket /api/messenger/ws</span>
+<span class="m">┌─────────────────────┴────────────────────────────────────────┐</span>
+<span class="m">│              </span><span class="g">SERVER (FastAPI + Uvicorn :8000)</span><span class="m">                  │</span>
+<span class="m">│ ┌─────────────────────────────────────────────────────────┐  │</span>
+<span class="m">│ │             </span><span class="p">PQC Engine (liboqs / simulation)</span><span class="m">            │  │</span>
+<span class="m">│ │  Kyber-1024  │  McEliece-8192  │  SPHINCS+-SHA2-256f    │  │</span>
+<span class="m">│ └─────────────────────┬───────────────────────────────────┘  │</span>
+<span class="m">│ ┌──────────────────┐  │  ┌────────────────────────────────┐  │</span>
+<span class="m">│ │  Quantum Layer   │  │  │  Symmetric Layer               │  │</span>
+<span class="m">│ │  Qiskit QRNG     │  │  │  AES-256-GCM + HKDF-SHA256     │  │</span>
+<span class="m">│ └──────────────────┘  │  └────────────────────────────────┘  │</span>
+<span class="m">│              SQLite / PostgreSQL (SQLAlchemy ORM)             │</span>
+<span class="m">└──────────────────────────────────────────────────────────────┘</span></div>
+  </div>
+
+  <!-- SLIDE 5: Key Exchange Flow -->
+  <div class="slide" data-slide="5">
+    <div class="badge purple">🔑 Cryptographic Flow</div>
+    <h2 class="slide-title">Session Key Derivation Protocol</h2>
+    <p class="section-sub">Three independent shared secrets fused via HKDF into one 256-bit session key</p>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">STEP 01</div>
+        <div class="step-label">Keygen</div>
+        <div class="step-algo">Kyber + McEliece + SPHINCS+</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 02</div>
+        <div class="step-label">Quantum Entropy</div>
+        <div class="step-algo">Qiskit Hadamard QRNG</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 03</div>
+        <div class="step-label">Encapsulate</div>
+        <div class="step-algo">KEM.encap(pk) → SS1, SS2</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 04</div>
+        <div class="step-label">HKDF Fusion</div>
+        <div class="step-algo">HKDF(SS1‖SS2‖entropy)</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 05</div>
+        <div class="step-label">Session Key</div>
+        <div class="step-algo">AES-256-GCM ready</div>
+      </div>
+    </div>
+    <div style="margin-top: 32px; max-width: 760px; width: 100%; background: rgba(0,255,136,0.04); border: 1px solid rgba(0,255,136,0.15); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: var(--muted);">
+      💡 <strong style="color: var(--green)">Harvest-Now-Decrypt-Later resistant:</strong> Even if an attacker captures all ciphertext and later breaks one KEM algorithm, they still cannot derive the session key — HKDF creates a non-invertible fusion from three independent secrets.
+    </div>
+  </div>
+
+  <!-- SLIDE 6: E2E Messenger KEM -->
+  <div class="slide" data-slide="6">
+    <div class="badge cyan">💬 Messenger</div>
+    <h2 class="slide-title">Asymmetric KEM — Per-User Encapsulation</h2>
+    <p class="section-sub">Each participant receives a different cryptographic blob; neither stores the raw key</p>
+    <div class="code-block"><span class="c">Alice</span>                       <span class="g">Server</span>                       <span class="p">Bob</span>
+
+<span class="c">←── Register ──────────────► </span><span class="g">kyber.keygen() → (pk_A, sk_A)</span>
+<span class="p">←── Register ──────────────►</span> <span class="g">kyber.keygen() → (pk_B, sk_B)</span>
+
+<span class="c">Alice selects Bob to chat</span>
+<span class="c">POST /conversations ────────►</span>
+                            <span class="g">S = HKDF(random ‖ random ‖ qrng)</span>
+                            <span class="g">ct_A = KEM.encap_with_key(pk_A, S)</span>
+                            <span class="g">ct_B = KEM.encap_with_key(pk_B, S)</span>
+                            <span class="g">DB: conversation(ct_A, ct_B)</span>
+<span class="c">← { key: ct_A } ───────────</span>          <span class="m">──── WS push: { key: ct_B } ──►</span>
+
+<span class="m">Each side decapsulates independently to recover</span> <span class="g">S</span>
+<span class="m">Messages: AES-256-GCM(msg, S) — raw key never leaves server memory</span></div>
+  </div>
+
+  <!-- SLIDE 7: Features -->
+  <div class="slide" data-slide="7">
+    <div class="badge green">✨ Features</div>
+    <h2 class="slide-title">Platform Capabilities</h2>
+    <p class="section-sub">9 phases of development — production grade</p>
+    <div class="two-col">
+      <ul class="checklist">
+        <li><span class="check-icon">🔐</span><div><strong>E2E Encrypted Messenger</strong><br><span style="color:var(--muted);font-size:12px">Real-time WebSocket + AES-256-GCM + per-user KEM</span></div></li>
+        <li><span class="check-icon">🧪</span><div><strong>Quantum Threat Sandbox</strong><br><span style="color:var(--muted);font-size:12px">Execute OPENQASM 2.0 circuits + BB84 QKD visualizer</span></div></li>
+        <li><span class="check-icon">🕵️</span><div><strong>AST Algorithm Analyzer</strong><br><span style="color:var(--muted);font-size:12px">Heuristic scanner for classical crypto vulnerabilities</span></div></li>
+        <li><span class="check-icon">🖼️</span><div><strong>Q-Steg (Image Steganography)</strong><br><span style="color:var(--muted);font-size:12px">QRNG-seeded LSB embedding in PNG/JPG images</span></div></li>
+      </ul>
+      <ul class="checklist">
+        <li><span class="check-icon">🔬</span><div><strong>BYOA Plugin Engine</strong><br><span style="color:var(--muted);font-size:12px">Upload your cipher — avalanche, entropy, attack simulation</span></div></li>
+        <li><span class="check-icon">📊</span><div><strong>Algorithm Benchmarks</strong><br><span style="color:var(--muted);font-size:12px">Timing matrix + brute-force / Grover's attack estimates</span></div></li>
+        <li><span class="check-icon">🔑</span><div><strong>JWT Authentication</strong><br><span style="color:var(--muted);font-size:12px">Bcrypt + JWT with auto-logout on token expiry</span></div></li>
+        <li><span class="check-icon">🛡️</span><div><strong>Rate Limiting</strong><br><span style="color:var(--muted);font-size:12px">SlowAPI 5 req/min on login — brute force prevention</span></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Security Fixes -->
+  <div class="slide" data-slide="8">
+    <div class="badge pink">🛡️ Security Hardening</div>
+    <h2 class="slide-title">Critical Fixes Applied</h2>
+    <p class="section-sub">Post-build security audit — all critical issues resolved</p>
+    <div class="cards" style="grid-template-columns: 1fr 1fr; max-width: 900px;">
+      <div class="card">
+        <div class="card-icon">🔑</div>
+        <h3>Asymmetric KEM Fixed</h3>
+        <p>Previously both users shared the same raw key. Now each user receives a unique KEM-encapsulated blob — the raw session key is never stored or transmitted.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⏰</div>
+        <h3>JWT Expiry Enforcement</h3>
+        <p>Client now decodes token expiry on load and schedules an auto-logout timer. Expired tokens are discarded immediately on page load.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚦</div>
+        <h3>Rate Limiting</h3>
+        <p>SlowAPI middleware on FastAPI enforces 5 login attempts/min and 10 registrations/min per IP — prevents brute-force and credential stuffing.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧹</div>
+        <h3>Production Code Cleanup</h3>
+        <p>Removed all <code>window.__last_*</code> debug globals, dead <code>handleIncomingMessage</code> stub, and console noise from the messenger.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: Tech Stack -->
+  <div class="slide" data-slide="9">
+    <div class="badge purple">⚙️ Tech Stack</div>
+    <h2 class="slide-title">Technology Choices</h2>
+    <p class="section-sub">Modern, production-ready stack with quantum extensions</p>
+    <div class="two-col">
+      <div>
+        <p style="color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:16px;">FRONTEND</p>
+        <table>
+          <tr><td>React 18 + TypeScript</td><td style="color:var(--muted)">UI framework</td></tr>
+          <tr><td>Vite</td><td style="color:var(--muted)">Build tool + HMR</td></tr>
+          <tr><td>React Router v6</td><td style="color:var(--muted)">Client routing</td></tr>
+          <tr><td>Recharts</td><td style="color:var(--muted)">Benchmark charts</td></tr>
+          <tr><td>Lucide Icons</td><td style="color:var(--muted)">Icon system</td></tr>
+          <tr><td>Vanilla CSS</td><td style="color:var(--muted)">Glassmorphism dark theme</td></tr>
+        </table>
+      </div>
+      <div>
+        <p style="color:var(--green);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;margin-bottom:16px;">BACKEND</p>
+        <table>
+          <tr><td>FastAPI + Uvicorn</td><td style="color:var(--muted)">Async web framework</td></tr>
+          <tr><td>SQLAlchemy + SQLite</td><td style="color:var(--muted)">ORM / database</td></tr>
+          <tr><td>PyJWT + bcrypt</td><td style="color:var(--muted)">Auth</td></tr>
+          <tr><td>SlowAPI</td><td style="color:var(--muted)">Rate limiting</td></tr>
+          <tr><td>liboqs-python</td><td style="color:var(--muted)">Real PQC algorithms</td></tr>
+          <tr><td>Qiskit + Aer</td><td style="color:var(--muted)">Quantum circuits</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Demo -->
+  <div class="slide" data-slide="10">
+    <div class="glow-line" style="width:700px;height:500px;background:var(--green);top:-200px;right:-200px;"></div>
+    <div class="glow-line" style="width:500px;height:400px;background:var(--purple);bottom:-200px;left:-200px;"></div>
+    <div class="badge green">🚀 Live Demo</div>
+    <h1 class="hero" style="font-size: clamp(36px,5vw,60px);">Ready for Demo</h1>
+    <p class="subtitle">Both servers running. Test accounts seeded.</p>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" style="font-size:20px;">:5173</div>
+        <div class="stat-label">Frontend (React)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" style="font-size:20px;">:8000</div>
+        <div class="stat-label">Backend (FastAPI)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" style="font-size:20px;">/docs</div>
+        <div class="stat-label">API Explorer</div>
+      </div>
+    </div>
+    <div style="margin-top:32px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 24px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cyan);">👤 alice / alice123</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 24px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);">👤 bob / bob123</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 24px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--purple);">👤 charlie / charlie123</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<nav>
+  <button id="prev" onclick="navigate(-1)">‹</button>
+  <div class="progress" id="progress"></div>
+  <button id="next" onclick="navigate(1)">›</button>
+  <span id="slide-count">1 / 10</span>
+</nav>
+
+<script>
+  // Starfield
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      top:${Math.random()*100}%;
+      left:${Math.random()*100}%;
+      --d:${2 + Math.random()*5}s;
+      animation-delay:${Math.random()*5}s;
+    `;
+    starsEl.appendChild(s);
+  }
+
+  // Slide logic
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  const progress = document.getElementById('progress');
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    progress.appendChild(dot);
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    slides[current].classList.add('prev');
+    setTimeout(() => slides[current < n ? current : n].classList.remove('prev'), 450);
+    current = n;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i === current));
+    document.getElementById('slide-count').textContent = `${current+1} / ${total}`;
+    if (current > 0) slides[current-1].classList.remove('prev');
+  }
+
+  function navigate(dir) {
+    const next = Math.max(0, Math.min(total-1, current + dir));
+    if (next !== current) goTo(next);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') navigate(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+  });
+
+  // Touch swipe
+  let touchX = 0;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) navigate(dx < 0 ? 1 : -1);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schrödinger's Box — Presentation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-dark: #020817;
+            --cyan: #00e5ff;
+            --violet: #a855f7;
+            --magenta: #ff00ff;
+            --green: #00ff88;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Space Grotesk', sans-serif;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1200px;
+        }
+
+        /* Animated Grid Background */
+        .bg-grid {
+            position: absolute;
+            inset: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform: rotateX(60deg) translateY(-100px) translateZ(-200px);
+            animation: gridScroll 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridScroll {
+            0% { transform: rotateX(60deg) translateY(0) translateZ(-200px); }
+            100% { transform: rotateX(60deg) translateY(60px) translateZ(-200px); }
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 60vw;
+            height: 60vh;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Presentation Container */
+        .deck {
+            position: relative;
+            width: 80vw;
+            max-width: 1200px;
+            height: 70vh;
+            max-height: 800px;
+            z-index: 10;
+        }
+
+        /* Slides */
+        .slide {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 22, 40, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 20px;
+            padding: 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(0.95) translateZ(-100px);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(0, 229, 255, 0.05);
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translateZ(0);
+        }
+
+        .slide.prev {
+            transform: scale(1.05) translateZ(100px);
+            opacity: 0;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 4rem;
+            margin: 0 0 1rem 0;
+            background: linear-gradient(to right, var(--cyan), var(--violet));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin: 0 0 2rem 0;
+            color: var(--cyan);
+            border-bottom: 2px solid rgba(0, 229, 255, 0.2);
+            padding-bottom: 0.5rem;
+        }
+
+        p, li {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        li::marker {
+            color: var(--cyan);
+            content: "▹  ";
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .highlight { color: var(--text-main); font-weight: 600; }
+        .accent { color: var(--magenta); font-family: 'JetBrains Mono', monospace;}
+        .mono { font-family: 'JetBrains Mono', monospace; font-size: 1.1em;}
+
+        /* Grid Layouts inside slides */
+        .split-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .split-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--violet);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+        }
+
+        /* Controls */
+        .controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 20;
+        }
+
+        .btn {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--cyan);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: var(--text-muted);
+            color: var(--text-muted);
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--cyan);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px var(--cyan);
+            z-index: 20;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--green);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            vertical-align: middle;
+            margin-left: 0.5rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+    <div class="ambient-glow"></div>
+
+    <div class="deck" id="deck">
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <h1 style="font-size: 5rem; text-align: center; margin-bottom: 2rem;">Schrödinger's Box</h1>
+            <p style="text-align: center; font-size: 1.5rem; color: var(--cyan); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em;">
+                Zero-Trust Post-Quantum Communication
+            </p>
+            <div style="text-align: center; margin-top: 3rem;">
+                <p style="font-size: 1rem;">Defending against "Harvest Now, Decrypt Later"</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: The Problem -->
+        <div class="slide">
+            <h2>The Quantum Threat <span class="badge" style="color:#ff6b6b; border-color: #ff6b6b; background: rgba(255,50,50,0.1)">CRQC</span></h2>
+            <div class="split-2">
+                <div>
+                    <p><span class="highlight">Shor's Algorithm</span> theoretically breaks RSA, Diffie-Hellman, and Elliptic Curve Cryptography in polynomial time on a Cryptographically Relevant Quantum Computer (CRQC).</p>
+                    <p>Current adversary strategy: <span class="highlight">"Harvest Now, Decrypt Later"</span>. Record encrypted Internet traffic today, store it, and decrypt it when quantum computers mature 5–15 years from now.</p>
+                </div>
+                <div class="card" style="border-color: #ff6b6b">
+                    <h3 style="color: #ff6b6b;">Vulnerable Primitives</h3>
+                    <ul>
+                        <li>RSA (Factoring)</li>
+                        <li>ECDH / ECDSA (Discrete Logarithm)</li>
+                        <li>Standard TLS Key Exchanges</li>
+                        <li>PGP / Secure Messaging (Signal Protocol)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: The Cryptographic Triad -->
+        <div class="slide">
+            <h2>The Post-Quantum Triad <span class="badge">Hybrid Fusion</span></h2>
+            <p>Our architecture utilizes a <strong>Defense-In-Depth</strong> strategy, wrapping AES-256-GCM payloads inside mathematically distinct protocols verified by NIST.</p>
+            <div class="split-3" style="margin-top: 2rem;">
+                <div class="card">
+                    <h3>1. Lattice KEM</h3>
+                    <p><strong>CRYSTALS-Kyber (ML-KEM)</strong> handles lightning-fast asymmetric key encapsulation to generate the primary key material.</p>
+                </div>
+                <div class="card">
+                    <h3>2. Code-Based KEM</h3>
+                    <p><strong>Classic McEliece</strong> provides an extremely conservative, historically proven secondary key encapsulation layer.</p>
+                </div>
+                <div class="card">
+                    <h3>3. Hash Signatures</h3>
+                    <p><strong>SPHINCS+ (SLH-DSA)</strong> digitally signs every packet, ensuring identity authentication completely immune to Shor's algorithm.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Deep Dive - Kyber -->
+        <div class="slide">
+            <h2>Deep Dive: Kyber-1024 <span class="accent">Module Learning With Errors</span></h2>
+            <div class="split-2">
+                <div>
+                    <p>Kyber operates on the hard mathematical problem of finding short vectors in a lattice (MLWE). Even an omnipotent quantum computer cannot solve this efficiently.</p>
+                    <ul>
+                        <li><span class="highlight">Performance:</span> Encapsulation takes &lt;1ms.</li>
+                        <li><span class="highlight">Security Level:</span> NIST Level 5 (equivalent to AES-256 brute force difficulty).</li>
+                        <li><span class="highlight">Key Sizes:</span> 1568 bytes (Public Key), 3168 bytes (Secret Key).</li>
+                    </ul>
+                </div>
+                <div class="card" style="border-color: var(--cyan)">
+                    <h3 style="color: var(--cyan)">The MLWE Problem</h3>
+                    <p style="font-size: 1rem; color: var(--text-main);">Given a public matrix <strong>A</strong> and a vector <strong>b = As + e</strong> (where <strong>s</strong> is the secret key and <strong>e</strong> is small random noise), finding <strong>s</strong> is computationally intractable.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Deep Dive - McEliece -->
+        <div class="slide">
+            <h2>Deep Dive: Classic McEliece <span class="accent">Goppa Codes</span></h2>
+            <div class="split-2">
+                <div>
+                    <p>Unlike Kyber, McEliece relies on the hardness of decoding a general linear code. Developed in 1978, it has survived literally decades of intense cryptanalysis.</p>
+                    <ul>
+                        <li><span class="highlight">Tradeoff:</span> Massive public keys (~1 Megabyte) but minuscule ciphertexts and incredibly fast decapsulation.</li>
+                        <li><span class="highlight">Role:</span> Acts as the "failsafe" layer in case lattice-based cryptography is eventually broken mathematically.</li>
+                    </ul>
+                </div>
+                <div class="card" style="border-color: var(--violet)">
+                    <h3 style="color: var(--violet)">Implementation Note</h3>
+                    <p style="font-size: 1rem; color: var(--text-main);">Browser chunking enables us to shuttle megabyte-sized McEliece-8192128 public keys across WebSocket payloads without locking the JavaScript main thread or exhausting stack sizes.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Deep Dive - SPHINCS+ -->
+        <div class="slide">
+            <h2>Deep Dive: SPHINCS+ <span class="accent">Stateless Signatures</span></h2>
+            <p>SPHINCS+ (SLH-DSA) is built entirely from secure hash functions (SHA-256). It does not rely on algebraic problems like factoring (RSA) or discrete logarithms (ECC).</p>
+            <div class="split-2" style="margin-top: 2rem;">
+                <div class="card bg-dark">
+                    <pre style="color: var(--cyan); font-size: 0.8rem; margin: 0; line-height: 1.5;">
+// Signature Generation Flow
+1. Hash message M with randomized prefix
+2. Sign root of FORS (subset-resilient tree)
+3. Sign path up via WOTS+ (one-time sig)
+4. Authenticate through hyper-tree layers
+5. Output ~49KB stateless signature
+                    </pre>
+                </div>
+                <div>
+                    <p><strong>Why Stateless?</strong> Stateful hash signatures (like XMSS) require tracking which keys have been used. Re-using a key breaks security. SPHINCS+ solves this mathematically via randomized hyper-tree indexing, eliminating the risk of catastrophic state-sync failures in real-time chat.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: HKDF Key Fusion -->
+        <div class="slide">
+            <h2>HKDF Key Fusion Setup <span class="badge">Hybrid Composition</span></h2>
+            <p>How do we combine multiple cryptographic primitives and quantum entropy into one unbreakable session key?</p>
+            <div class="card" style="margin-top:2rem; width: 80%; margin: 2rem auto; text-align: center;">
+                <pre style="color: var(--magenta); font-size: 1rem; margin: 0; line-height: 1.8;">
+Kyber Shared Secret (32B)
+          +
+McEliece Shared Secret (32B)
+          +
+QRNG Quantum Bits (32B)
+          ⬇
+HKDF-SHA256(IKM, salt, info="schrod-v1")
+          ⬇
+<strong>AES-256-GCM Final Payload Key</strong>
+                </pre>
+            </div>
+        </div>
+
+        <!-- Slide 8: Real-Time Entropy -->
+        <div class="slide">
+            <h2>Quantum Entropy (QRNG) <span class="accent">IBM Qiskit</span></h2>
+            <div class="split-2">
+                <div>
+                    <p>Standard cryptographic Random Number Generators (PRNGs) are deterministic. If internal states are compromised (e.g. Dual_EC_DRBG), encryption can be broken.</p>
+                    <p>We leverage <span class="highlight">IBM Qiskit</span> specifically computing Hadamard gates creating <strong>Quantum Superposition</strong>. The state collapse guarantees true, unpredictable quantum randomness fed straight into the HKDF pipeline.</p>
+                </div>
+                <div class="card bg-dark">
+                    <pre style="color: var(--green); font-size: 0.85rem; margin: 0; line-height: 1.4;">
+// OpenQASM 2.0 Circuit executing on Server
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[8];
+creg c[8];
+
+h q[0]; h q[1]; h q[2]; 
+h q[3]; h q[4]; h q[5];
+measure q -> c;
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Zero-Trust Client-Side -->
+        <div class="slide">
+            <h2>Zero-Trust Media Transport <span class="badge">Web Crypto API</span></h2>
+            <p>Our platform handles <strong>Text, Audio, Documents, and Images</strong>. The server never observes plaintext data, relying exclusively on client-side memory buffer encryption.</p>
+            <ul>
+                <li><span class="highlight">AES-256-GCM:</span> Payload encryption executes entirely within the browser sandbox using the native high-performance Web Crypto API.</li>
+                <li><span class="highlight">Blind Backend:</span> The FastAPI server acts purely as a routing relay. It receives Base64 encrypted ciphertexts alongside SPHINCS+ signatures.</li>
+                <li><span class="highlight">Blob Decoding:</span> The receiving browser verifies the signature, applies the HKDF AES key to the byte array, and constructs media chunks natively (<code>URL.createObjectURL</code>).</li>
+            </ul>
+        </div>
+
+        <!-- Slide 10: Messenger Protocol Flow -->
+        <div class="slide">
+            <h2>Asymmetric Key Encapsulation Engine</h2>
+            <div class="split-2">
+                <div>
+                    <p>During the `Messenger` P2P phase, how do users communicate asynchronously?</p>
+                    <p>Alice pulls Bob's persistent Kyber+McEliece Public Keys from the server, generates a 32-byte secret `S`, encapsulates it, and sends the resulting ciphertexts to Bob. Bob uses his secret key to decapsulate back to `S`, forming a perfectly secure E2E tunnel.</p>
+                </div>
+                <div class="card" style="border-color: var(--cyan)">
+                    <pre style="color: var(--cyan); font-size: 0.8rem; margin: 0; line-height: 1.5;">
+1. S = os.urandom(32)
+2. CT_A, SS_A = Kyber.encap(PK_Alice)
+3. CT_B, SS_B = Kyber.encap(PK_Bob)
+   (Same for McEliece)
+4. Send CT_B to Bob over WebSocket
+5. Bob decapsulates -> S
+6. Alice & Bob use S for AES-GCM
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Offline Node Pairings -->
+        <div class="slide">
+            <h2>Offline Node Execution <span class="badge">Air-Gapped PKI</span></h2>
+            <p>How do we establish trust without Certificate Authorities (CAs)?</p>
+            <div class="split-2" style="margin-top: 1rem;">
+                <div class="card">
+                    <p style="font-size: 1rem;">Nodes can execute <strong>Out-Of-Band (OOB)</strong> pairings. The Host generates a visual mnemonic string referencing their public PKI block hash.</p>
+                    <p style="color: var(--magenta); font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; text-align: center; margin: 1rem 0;">SBX-ALF-ZUL-102</p>
+                </div>
+                <div>
+                    <p>Peers communicate the Optical String via phone call, paper, or radio. The Guest enters the code, verifying the identity of the Host mathematically before socket negotiation kicks off.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Quantum Steganography -->
+        <div class="slide">
+            <h2>Quantum Steganography <span class="accent">Lattice Embedding</span></h2>
+            <p>Sometimes encryption isn't enough—the fact that you represent encrypted data is suspicious.</p>
+            <ul>
+                <li><strong>LSB Image Steganography:</strong> Hide AES-encrypted payloads invisibly inside the RGB Least Significant Bits of cover images (PNG).</li>
+                <li><strong>Cryptographic Salting:</strong> We mix the embedding path via a QRNG seed. Instead of sequential bit packing, pixels are targeted pseudo-randomly based on quantum phenomena.</li>
+                <li><strong>Plausible Deniability:</strong> Without the Seed, the Key, and the Image combo, detection algorithms observe nothing but standard image noise.</li>
+            </ul>
+        </div>
+
+        <!-- Slide 13: Bring Your Own Algorithm (BYOA) -->
+        <div class="slide">
+            <h2>Bring Your Own Algorithm (BYOA) <span class="badge" style="border-color: var(--violet); color: var(--violet);">Hot-Reloading Python plugins</span></h2>
+            <div class="split-2">
+                <div>
+                    <p>Designed for academic research, the platform features a real-time Algorithm Sandbox.</p>
+                    <p>Students write raw Python cryptographic functions which are sent to the FastAPI backend, dynamically parsed with <code>ast</code> heuristics for malware, and written to disk.</p>
+                    <p>We trigger an <code>importlib.reload()</code>, instantly rewiring the production data funnel to route through the student's injected classical/post-quantum function bypassing standard AES modules.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: Threat Intelligence Analyzer -->
+        <div class="slide">
+            <h2>Threat Intelligence Suite <span class="accent">AST Engine</span></h2>
+            <p>The platform actively analyzes and exposes weaknesses in submitted classical (and post-quantum) cipher logic.</p>
+            <div class="split-3" style="margin-top: 1.5rem;">
+                <div class="card">
+                    <h3 style="color: #ff6b6b">AST Linear Analysis</h3>
+                    <p style="font-size: 0.9rem;">Parses Python Abstract Syntax Trees for deterministic flaws like ECB mode usage or weak RNGs (`random.randint`).</p>
+                </div>
+                <div class="card">
+                    <h3 style="color: var(--cyan)">Shor's Impact Sim</h3>
+                    <p style="font-size: 0.9rem;">Evaluates standard discrete-log vulnerabilities in older algorithms utilizing polynomial time qubit scaling estimates.</p>
+                </div>
+                <div class="card">
+                    <h3 style="color: var(--violet)">Dynamic Timing</h3>
+                    <p style="font-size: 0.9rem;">Benchmarks custom algorithms across memory footprint, keygen cycles, and payload encapsulation micro-second times.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Conclusion -->
+        <div class="slide">
+            <h1 style="text-align: center; margin-top: 2rem;">Secure The Future</h1>
+            <p style="text-align: center; font-size: 1.5rem; color: var(--cyan); margin-top: 2rem;">
+                Implementation Complete. Ready for Demonstration.
+            </p>
+            <div style="text-align: center; margin-top: 3rem;">
+                <p class="mono">FastAPI · React · Qiskit · liboqs</p>
+                <div style="width: 50px; height: 1px; background: var(--cyan); margin: 2rem auto;"></div>
+                <p style="font-size: 0.9rem; color: rgba(255,255,255,0.3)">Team StrawHats· 2026</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="prevBtn" disabled>◄ Prev</button>
+        <button class="btn" id="nextBtn">Next ►</button>
+    </div>
+
+    <div class="progress-bar" id="progress"></div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progress = document.getElementById('progress');
+        let currentSlide = 0;
+
+        function updateDeck() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === slides.length - 1;
+            
+            const p = ((currentSlide + 1) / slides.length) * 100;
+            progress.style.width = p + '%';
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) { currentSlide--; updateDeck(); }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < slides.length - 1) { currentSlide++; updateDeck(); }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                if (currentSlide < slides.length - 1) { currentSlide++; updateDeck(); }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 0) { currentSlide--; updateDeck(); }
+            }
+        });
+
+        updateDeck();
+    </script>
+</body>
+</html>

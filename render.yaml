@@ -1,0 +1,20 @@
+# render.yaml — Infrastructure as Code for Schrödinger's Box
+# Deploys as a single Monolithic Web Service where FastAPI serves the React App.
+services:
+  - type: web
+    name: schrodingers-box
+    env: python
+    plan: free
+    buildCommand: "bash ./build.sh"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: USE_LIBOQS
+        value: "false"  # Defaulting to ECDH/RSA fallbacks unless liboqs C-binaries are manually installed on the container
+      - key: USE_QISKIT
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
