@@ -13,6 +13,7 @@ slowapi
 # ORM / Database
 sqlalchemy
 PyJWT
+PIL
 
 # PQC — Open Quantum Safe (liboqs Python bindings)
 # Install with: pip install liboqs-python
